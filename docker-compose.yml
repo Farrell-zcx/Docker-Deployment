@@ -1,5 +1,5 @@
 # ===========================================================
-# Docker Compose — Ekosistem MyMember + SSO Engine
+# Docker Compose â€” Ekosistem MyMember + SSO Engine
 # ===========================================================
 # Cara pakai:
 #   1. Copy file ini ke root folder yang berisi kedua project
@@ -12,7 +12,7 @@
 services:
 
   # =====================================================
-  # DATABASE — MySQL / MariaDB (shared semua service)
+  # DATABASE â€” MySQL / MariaDB (shared semua service)
   # =====================================================
   mysql:
     image: mariadb:10.11
@@ -22,7 +22,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secretpassword}
       MYSQL_DATABASE: sso_engine
     volumes:
-      # Persistent storage — data tidak hilang saat container restart
+      # Persistent storage â€” data tidak hilang saat container restart
       - mysql_data:/var/lib/mysql
       # Script inisialisasi database (otomatis dijalankan saat pertama kali)
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
@@ -37,7 +37,7 @@ services:
       retries: 5
 
   # =====================================================
-  # REDIS — Token Blacklist untuk SLO (SSO Engine)
+  # REDIS â€” Token Blacklist untuk SLO (SSO Engine)
   # =====================================================
   redis:
     image: redis:7-alpine
@@ -56,7 +56,7 @@ services:
       retries: 5
 
   # =====================================================
-  # SSO ENGINE — Autentikasi Terpusat (CI4 + Apache)
+  # SSO ENGINE â€” Autentikasi Terpusat (CI4 + Apache)
   # =====================================================
   sso-engine:
     build:
@@ -68,7 +68,7 @@ services:
       CI_ENVIRONMENT: production
       app.baseURL: ${SSO_BASE_URL:-http://sso.localhost/}
 
-      # Database — hostname = nama service Docker, bukan localhost
+      # Database â€” hostname = nama service Docker, bukan localhost
       database.default.hostname: mysql
       database.default.database: sso_engine
       database.default.username: root
@@ -98,7 +98,7 @@ services:
       - desnet-network
 
   # =====================================================
-  # MYMEMBER — PHP Backend (CI4 + Apache)
+  # MYMEMBER â€” PHP Backend (CI4 + Apache)
   # =====================================================
   mymember-app:
     build:
@@ -117,7 +117,7 @@ services:
       database.default.password: ${MYSQL_ROOT_PASSWORD:-secretpassword}
       database.default.DBDriver: MySQLi
 
-      # SSO Engine — pakai nama service Docker, bukan domain
+      # SSO Engine â€” pakai nama service Docker, bukan domain
       sso.baseUrl: ${SSO_BASE_URL:-http://sso.localhost}
       sso.internalUrl: http://sso-engine
       sso.clientId: ${MYMEMBER_SSO_CLIENT_ID:-mymember-app}
@@ -140,7 +140,7 @@ services:
       - desnet-network
 
   # =====================================================
-  # MYMEMBER OCR — FastAPI + Tesseract + OpenCV
+  # MYMEMBER OCR â€” FastAPI + Tesseract + OpenCV
   # =====================================================
   mymember-ocr:
     build:
@@ -154,7 +154,7 @@ services:
       - desnet-network
 
   # =====================================================
-  # CRON — Email Reminder H-2 (Penjadwalan Otomatis)
+  # CRON â€” Email Reminder H-2 (Penjadwalan Otomatis)
   # =====================================================
   mymember-cron:
     build:
@@ -197,7 +197,41 @@ services:
       - desnet-network
 
   # =====================================================
-  # NGINX — Reverse Proxy (pintu masuk utama)
+  # INVENTORY — Laravel Backend (PHP 8.3 + Apache)
+  # =====================================================
+  inventory-app:
+    build:
+      context: ./inventory
+      dockerfile: Dockerfile
+    container_name: desnet-inventory-app
+    restart: unless-stopped
+    environment:
+      APP_NAME: "Desnet Inventory"
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: ${INVENTORY_BASE_URL:-http://inventory.localhost}
+      APP_KEY: ${INVENTORY_APP_KEY:-base64:fJ6BPmLWPLjr4i6VrHBmX3fDZ05SPIQ0hJrnldlToeE=}
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: inventory_sso
+      DB_USERNAME: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secretpassword}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SSO_BASE_URL: ${SSO_BASE_URL:-http://sso.localhost}
+      SSO_INTERNAL_URL: http://sso-engine
+      SSO_CLIENT_ID: inventory-app
+      SSO_REDIRECT_URI: ${INVENTORY_SSO_REDIRECT:-http://inventory.localhost/callback}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - desnet-network
+  # =====================================================
+  # NGINX â€” Reverse Proxy (pintu masuk utama)
   # =====================================================
   nginx:
     image: nginx:alpine
@@ -216,7 +250,7 @@ services:
       - desnet-network
 
 # =====================================================
-# VOLUMES — Persistent Storage
+# VOLUMES â€” Persistent Storage
 # =====================================================
 volumes:
   mysql_data:
@@ -225,8 +259,9 @@ volumes:
     driver: local
 
 # =====================================================
-# NETWORKS — Internal Communication
+# NETWORKS â€” Internal Communication
 # =====================================================
 networks:
   desnet-network:
     driver: bridge
+

@@ -8,3 +8,5 @@ sso-engine/
 # OS files
 .DS_Store
 Thumbs.db
+
+inventory/
