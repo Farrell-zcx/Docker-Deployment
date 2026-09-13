@@ -1,0 +1,10 @@
+﻿# Environment variables (berisi password & credential)
+.env
+
+# Project folders (di-clone terpisah, bukan bagian dari repo ini)
+mymember/
+sso-engine/
+
+# OS files
+.DS_Store
+Thumbs.db

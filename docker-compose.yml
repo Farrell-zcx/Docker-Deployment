@@ -1,0 +1,231 @@
+# ===========================================================
+# Docker Compose — Ekosistem MyMember + SSO Engine
+# ===========================================================
+# Cara pakai:
+#   1. Copy file ini ke root folder yang berisi kedua project
+#   2. Sesuaikan path di 'build.context' jika perlu
+#   3. Buat file .env di samping docker-compose.yml (lihat contoh di bawah)
+#   4. Jalankan: docker compose up --build -d
+#   5. Akses: http://localhost (nginx reverse proxy)
+# ===========================================================
+
+services:
+
+  # =====================================================
+  # DATABASE — MySQL / MariaDB (shared semua service)
+  # =====================================================
+  mysql:
+    image: mariadb:10.11
+    container_name: desnet-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secretpassword}
+      MYSQL_DATABASE: sso_engine
+    volumes:
+      # Persistent storage — data tidak hilang saat container restart
+      - mysql_data:/var/lib/mysql
+      # Script inisialisasi database (otomatis dijalankan saat pertama kali)
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    ports:
+      - "3306:3306"
+    networks:
+      - desnet-network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # =====================================================
+  # REDIS — Token Blacklist untuk SLO (SSO Engine)
+  # =====================================================
+  redis:
+    image: redis:7-alpine
+    container_name: desnet-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - desnet-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # =====================================================
+  # SSO ENGINE — Autentikasi Terpusat (CI4 + Apache)
+  # =====================================================
+  sso-engine:
+    build:
+      context: ./sso-engine
+      dockerfile: Dockerfile
+    container_name: desnet-sso-engine
+    restart: unless-stopped
+    environment:
+      CI_ENVIRONMENT: production
+      app.baseURL: ${SSO_BASE_URL:-http://sso.localhost/}
+
+      # Database — hostname = nama service Docker, bukan localhost
+      database.default.hostname: mysql
+      database.default.database: sso_engine
+      database.default.username: root
+      database.default.password: ${MYSQL_ROOT_PASSWORD:-secretpassword}
+      database.default.DBDriver: MySQLi
+
+      # Redis
+      redis.host: redis
+      redis.port: 6379
+      redis.password: ""
+      redis.database: 0
+
+      # Email SMTP
+      email.protocol: smtp
+      email.SMTPHost: ${SMTP_HOST:-sandbox.smtp.mailtrap.io}
+      email.SMTPUser: ${SMTP_USER}
+      email.SMTPPass: ${SMTP_PASS}
+      email.SMTPPort: ${SMTP_PORT:-2525}
+      email.SMTPCrypto: tls
+      email.mailType: html
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - desnet-network
+
+  # =====================================================
+  # MYMEMBER — PHP Backend (CI4 + Apache)
+  # =====================================================
+  mymember-app:
+    build:
+      context: ./mymember
+      dockerfile: Dockerfile
+    container_name: desnet-mymember-app
+    restart: unless-stopped
+    environment:
+      CI_ENVIRONMENT: production
+      app.baseURL: ${MYMEMBER_BASE_URL:-http://mymember.localhost/}
+
+      # Database
+      database.default.hostname: mysql
+      database.default.database: mymember_db
+      database.default.username: root
+      database.default.password: ${MYSQL_ROOT_PASSWORD:-secretpassword}
+      database.default.DBDriver: MySQLi
+
+      # SSO Engine — pakai nama service Docker, bukan domain
+      sso.baseUrl: http://sso-engine
+      sso.clientId: ${MYMEMBER_SSO_CLIENT_ID:-mymember-app}
+      sso.redirectUri: ${MYMEMBER_SSO_REDIRECT:-http://mymember.localhost/auth/callback}
+
+      # Email SMTP
+      email.fromEmail: ${MYMEMBER_EMAIL_FROM:-noreply@mymember.id}
+      email.fromName: "MyMember Official"
+      email.protocol: smtp
+      email.SMTPHost: ${SMTP_HOST:-sandbox.smtp.mailtrap.io}
+      email.SMTPUser: ${SMTP_USER}
+      email.SMTPPass: ${SMTP_PASS}
+      email.SMTPPort: ${SMTP_PORT:-2525}
+      email.SMTPCrypto: tls
+      email.mailType: html
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - desnet-network
+
+  # =====================================================
+  # MYMEMBER OCR — FastAPI + Tesseract + OpenCV
+  # =====================================================
+  mymember-ocr:
+    build:
+      context: ./mymember/fastAPI
+      dockerfile: Dockerfile
+    container_name: desnet-mymember-ocr
+    restart: unless-stopped
+    environment:
+      TESSERACT_CMD_PATH: /usr/bin/tesseract
+    networks:
+      - desnet-network
+
+  # =====================================================
+  # CRON — Email Reminder H-2 (Penjadwalan Otomatis)
+  # =====================================================
+  mymember-cron:
+    build:
+      context: ./mymember
+      dockerfile: Dockerfile
+    container_name: desnet-mymember-cron
+    restart: unless-stopped
+    # Override command: install cron daemon + jalankan jadwal
+    entrypoint: /bin/bash
+    command: >
+      -c "
+      apt-get update && apt-get install -y cron &&
+      echo '0 7 * * * cd /var/www/html && /usr/local/bin/php spark email:reminder >> /var/log/mymember-email.log 2>&1' > /etc/cron.d/mymember-reminder &&
+      echo '0 18 * * * cd /var/www/html && /usr/local/bin/php spark email:reminder >> /var/log/mymember-email.log 2>&1' >> /etc/cron.d/mymember-reminder &&
+      echo '' >> /etc/cron.d/mymember-reminder &&
+      chmod 0644 /etc/cron.d/mymember-reminder &&
+      crontab /etc/cron.d/mymember-reminder &&
+      cron -f
+      "
+    environment:
+      CI_ENVIRONMENT: production
+      database.default.hostname: mysql
+      database.default.database: mymember_db
+      database.default.username: root
+      database.default.password: ${MYSQL_ROOT_PASSWORD:-secretpassword}
+      database.default.DBDriver: MySQLi
+      email.fromEmail: ${MYMEMBER_EMAIL_FROM:-noreply@mymember.id}
+      email.fromName: "MyMember Official"
+      email.protocol: smtp
+      email.SMTPHost: ${SMTP_HOST:-sandbox.smtp.mailtrap.io}
+      email.SMTPUser: ${SMTP_USER}
+      email.SMTPPass: ${SMTP_PASS}
+      email.SMTPPort: ${SMTP_PORT:-2525}
+      email.SMTPCrypto: tls
+      email.mailType: html
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - desnet-network
+
+  # =====================================================
+  # NGINX — Reverse Proxy (pintu masuk utama)
+  # =====================================================
+  nginx:
+    image: nginx:alpine
+    container_name: desnet-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      # - "443:443"  # Uncomment jika sudah setup SSL
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - sso-engine
+      - mymember-app
+      - mymember-ocr
+    networks:
+      - desnet-network
+
+# =====================================================
+# VOLUMES — Persistent Storage
+# =====================================================
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+
+# =====================================================
+# NETWORKS — Internal Communication
+# =====================================================
+networks:
+  desnet-network:
+    driver: bridge
