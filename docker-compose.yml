@@ -118,7 +118,8 @@ services:
       database.default.DBDriver: MySQLi
 
       # SSO Engine — pakai nama service Docker, bukan domain
-      sso.baseUrl: http://sso-engine
+      sso.baseUrl: ${SSO_BASE_URL:-http://sso.localhost}
+      sso.internalUrl: http://sso-engine
       sso.clientId: ${MYMEMBER_SSO_CLIENT_ID:-mymember-app}
       sso.redirectUri: ${MYMEMBER_SSO_REDIRECT:-http://mymember.localhost/auth/callback}
 
