@@ -123,6 +123,13 @@ services:
       sso.clientId: ${MYMEMBER_SSO_CLIENT_ID:-mymember-app}
       sso.redirectUri: ${MYMEMBER_SSO_REDIRECT:-http://mymember.localhost/auth/callback}
 
+      # Redis (Token Blacklist untuk SLO)
+      redis.host: redis
+      redis.port: 6379
+
+      # OCR Service
+      OCR_BASE_URL: http://mymember-ocr:8000
+
       # Email SMTP
       email.fromEmail: ${MYMEMBER_EMAIL_FROM:-noreply@mymember.id}
       email.fromName: "MyMember Official"
@@ -135,6 +142,8 @@ services:
       email.mailType: html
     depends_on:
       mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - desnet-network
@@ -192,6 +201,8 @@ services:
       email.mailType: html
     depends_on:
       mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - desnet-network
