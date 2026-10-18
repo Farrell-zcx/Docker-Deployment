@@ -82,6 +82,8 @@ services:
       redis.database: 0
 
       # Email SMTP
+      email.fromEmail: ${SMTP_USER}
+      email.fromName: "SSO Engine"
       email.protocol: smtp
       email.SMTPHost: ${SMTP_HOST:-sandbox.smtp.mailtrap.io}
       email.SMTPUser: ${SMTP_USER}
@@ -175,8 +177,13 @@ services:
     entrypoint: /bin/bash
     command: >
       -c "
+      ln -snf /usr/share/zoneinfo/Asia/Jakarta /etc/localtime && echo Asia/Jakarta > /etc/timezone &&
       apt-get update && apt-get install -y cron &&
-      echo '0 7 * * * cd /var/www/html && /usr/local/bin/php spark email:reminder >> /var/log/mymember-email.log 2>&1' > /etc/cron.d/mymember-reminder &&
+      printenv > /etc/environment &&
+      sed -E 's|^([^=]+)=(.*)|\\1=\"\\2\"|' /etc/environment > /var/www/html/.env &&
+      echo 'SHELL=/bin/bash' > /etc/cron.d/mymember-reminder &&
+      echo 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' >> /etc/cron.d/mymember-reminder &&
+      echo '0 7 * * * cd /var/www/html && /usr/local/bin/php spark email:reminder >> /var/log/mymember-email.log 2>&1' >> /etc/cron.d/mymember-reminder &&
       echo '0 18 * * * cd /var/www/html && /usr/local/bin/php spark email:reminder >> /var/log/mymember-email.log 2>&1' >> /etc/cron.d/mymember-reminder &&
       echo '' >> /etc/cron.d/mymember-reminder &&
       chmod 0644 /etc/cron.d/mymember-reminder &&
@@ -184,6 +191,7 @@ services:
       cron -f
       "
     environment:
+      TZ: Asia/Jakarta
       CI_ENVIRONMENT: production
       database.default.hostname: mysql
       database.default.database: mymember_db
