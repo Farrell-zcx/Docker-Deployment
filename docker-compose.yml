@@ -70,7 +70,11 @@ services:
       app.baseURL: ${SSO_BASE_URL:-http://sso.localhost/}
       SSO_BASE_URL: ${SSO_BASE_URL:-http://sso.localhost/}
 
-      # Database â€” hostname = nama service Docker, bukan localhost
+      # Database — hostname = nama service Docker, bukan localhost
+      DB_HOST: mysql
+      DB_DATABASE: sso_engine
+      DB_USERNAME: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secretpassword}
       database.default.hostname: mysql
       database.default.database: sso_engine
       database.default.username: root
@@ -78,6 +82,8 @@ services:
       database.default.DBDriver: MySQLi
 
       # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       redis.host: redis
       redis.port: 6379
       redis.password: ""
