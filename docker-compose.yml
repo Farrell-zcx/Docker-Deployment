@@ -65,6 +65,7 @@ services:
     container_name: desnet-sso-engine
     restart: unless-stopped
     environment:
+      TZ: Asia/Jakarta
       CI_ENVIRONMENT: production
       app.baseURL: ${SSO_BASE_URL:-http://sso.localhost/}
 
