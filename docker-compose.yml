@@ -90,13 +90,21 @@ services:
       redis.database: 0
 
       # Email SMTP
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_CRYPTO: tls
+      SMTP_PROTOCOL: smtp
+      SMTP_MAIL_TYPE: html
+      SMTP_FROM_NAME: "Farrel Labib - SSO Portal"
       email.fromEmail: ${SMTP_USER}
-      email.fromName: "SSO Engine"
+      email.fromName: "Farrel Labib - SSO Portal"
       email.protocol: smtp
-      email.SMTPHost: ${SMTP_HOST:-sandbox.smtp.mailtrap.io}
+      email.SMTPHost: ${SMTP_HOST:-smtp.gmail.com}
       email.SMTPUser: ${SMTP_USER}
       email.SMTPPass: ${SMTP_PASS}
-      email.SMTPPort: ${SMTP_PORT:-2525}
+      email.SMTPPort: ${SMTP_PORT:-587}
       email.SMTPCrypto: tls
       email.mailType: html
     depends_on:
