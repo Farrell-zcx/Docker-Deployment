@@ -68,6 +68,7 @@ services:
       TZ: Asia/Jakarta
       CI_ENVIRONMENT: production
       app.baseURL: ${SSO_BASE_URL:-http://sso.localhost/}
+      SSO_BASE_URL: ${SSO_BASE_URL:-http://sso.localhost/}
 
       # Database â€” hostname = nama service Docker, bukan localhost
       database.default.hostname: mysql
