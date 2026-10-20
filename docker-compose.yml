@@ -127,6 +127,7 @@ services:
     environment:
       CI_ENVIRONMENT: production
       app.baseURL: ${MYMEMBER_BASE_URL:-http://mymember.localhost/}
+      MYMEMBER_BASE_URL: ${MYMEMBER_BASE_URL:-http://mymember.localhost/}
 
       # Database
       database.default.hostname: mysql
