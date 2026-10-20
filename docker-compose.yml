@@ -225,13 +225,13 @@ services:
       database.default.username: root
       database.default.password: ${MYSQL_ROOT_PASSWORD:-secretpassword}
       database.default.DBDriver: MySQLi
-      email.fromEmail: ${MYMEMBER_EMAIL_FROM:-noreply@mymember.id}
+      email.fromEmail: ${MYMEMBER_EMAIL_FROM:-${SMTP_USER}}
       email.fromName: "MyMember Official"
       email.protocol: smtp
-      email.SMTPHost: ${SMTP_HOST:-sandbox.smtp.mailtrap.io}
+      email.SMTPHost: ${SMTP_HOST:-smtp.gmail.com}
       email.SMTPUser: ${SMTP_USER}
       email.SMTPPass: ${SMTP_PASS}
-      email.SMTPPort: ${SMTP_PORT:-2525}
+      email.SMTPPort: ${SMTP_PORT:-587}
       email.SMTPCrypto: tls
       email.mailType: html
     depends_on:
