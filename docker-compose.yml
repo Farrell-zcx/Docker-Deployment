@@ -67,8 +67,8 @@ services:
     environment:
       TZ: Asia/Jakarta
       CI_ENVIRONMENT: production
-      app.baseURL: ${SSO_BASE_URL:-http://sso.localhost/}
-      SSO_BASE_URL: ${SSO_BASE_URL:-http://sso.localhost/}
+      app.baseURL: ${SSO_BASE_URL:-https://sso.31.97.48.33.sslip.io/}
+      SSO_BASE_URL: ${SSO_BASE_URL:-https://sso.31.97.48.33.sslip.io/}
 
       # Database — hostname = nama service Docker, bukan localhost
       DB_HOST: mysql
@@ -130,19 +130,29 @@ services:
       MYMEMBER_BASE_URL: ${MYMEMBER_BASE_URL:-http://mymember.localhost/}
 
       # Database
+      DB_HOST: mysql
+      DB_DATABASE: mymember_db
+      DB_USERNAME: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secretpassword}
       database.default.hostname: mysql
       database.default.database: mymember_db
       database.default.username: root
       database.default.password: ${MYSQL_ROOT_PASSWORD:-secretpassword}
       database.default.DBDriver: MySQLi
 
-      # SSO Engine â€” pakai nama service Docker, bukan domain
-      sso.baseUrl: ${SSO_BASE_URL:-http://sso.localhost}
+      # SSO Engine
+      SSO_BASE_URL: ${SSO_BASE_URL:-https://sso.31.97.48.33.sslip.io/}
+      SSO_INTERNAL_URL: http://sso-engine
+      SSO_CLIENT_ID: ${MYMEMBER_SSO_CLIENT_ID:-mymember-app}
+      SSO_REDIRECT_URI: ${MYMEMBER_SSO_REDIRECT:-https://mymember.tech/auth/callback}
+      sso.baseUrl: ${SSO_BASE_URL:-https://sso.31.97.48.33.sslip.io/}
       sso.internalUrl: http://sso-engine
       sso.clientId: ${MYMEMBER_SSO_CLIENT_ID:-mymember-app}
-      sso.redirectUri: ${MYMEMBER_SSO_REDIRECT:-http://mymember.localhost/auth/callback}
+      sso.redirectUri: ${MYMEMBER_SSO_REDIRECT:-https://mymember.tech/auth/callback}
 
       # Redis (Token Blacklist untuk SLO)
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       redis.host: redis
       redis.port: 6379
 
@@ -255,10 +265,10 @@ services:
       DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secretpassword}
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      SSO_BASE_URL: ${SSO_BASE_URL:-http://sso.localhost}
+      SSO_BASE_URL: ${SSO_BASE_URL:-https://sso.31.97.48.33.sslip.io/}
       SSO_INTERNAL_URL: http://sso-engine
       SSO_CLIENT_ID: inventory-app
-      SSO_REDIRECT_URI: ${INVENTORY_SSO_REDIRECT:-http://inventory.localhost/callback}
+      SSO_REDIRECT_URI: ${INVENTORY_SSO_REDIRECT:-https://inventory.31.97.48.33.sslip.io/callback}
     depends_on:
       mysql:
         condition: service_healthy
