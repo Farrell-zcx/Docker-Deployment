@@ -19,6 +19,7 @@ services:
     container_name: desnet-mysql
     restart: unless-stopped
     environment:
+      TZ: Asia/Jakarta
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secretpassword}
       MYSQL_DATABASE: sso_engine
     volumes:
