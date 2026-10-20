@@ -126,8 +126,8 @@ services:
     restart: unless-stopped
     environment:
       CI_ENVIRONMENT: production
-      app.baseURL: ${MYMEMBER_BASE_URL:-http://mymember.localhost/}
-      MYMEMBER_BASE_URL: ${MYMEMBER_BASE_URL:-http://mymember.localhost/}
+      app.baseURL: ${MYMEMBER_BASE_URL:-https://mymember.tech/}
+      MYMEMBER_BASE_URL: ${MYMEMBER_BASE_URL:-https://mymember.tech/}
 
       # Database
       DB_HOST: mysql
@@ -255,7 +255,7 @@ services:
       APP_NAME: "Desnet Inventory"
       APP_ENV: production
       APP_DEBUG: "false"
-      APP_URL: ${INVENTORY_BASE_URL:-http://inventory.localhost}
+      APP_URL: ${INVENTORY_BASE_URL:-https://inventory.31.97.48.33.sslip.io}
       APP_KEY: ${INVENTORY_APP_KEY:-base64:fJ6BPmLWPLjr4i6VrHBmX3fDZ05SPIQ0hJrnldlToeE=}
       DB_CONNECTION: mysql
       DB_HOST: mysql
