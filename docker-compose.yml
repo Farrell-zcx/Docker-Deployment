@@ -160,9 +160,17 @@ services:
       # OCR Service
       OCR_BASE_URL: http://mymember-ocr:8000
 
-      # Email SMTP
-      email.fromEmail: ${MYMEMBER_EMAIL_FROM:-${SMTP_USER}}
-      email.fromName: "MyMember Official"
+      # Email SMTP (Identik dengan SSO Engine)
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_CRYPTO: tls
+      SMTP_PROTOCOL: smtp
+      SMTP_MAIL_TYPE: html
+      SMTP_FROM_NAME: "Farrel Labib - MyMember"
+      email.fromEmail: ${SMTP_USER}
+      email.fromName: "Farrel Labib - MyMember"
       email.protocol: smtp
       email.SMTPHost: ${SMTP_HOST:-smtp.gmail.com}
       email.SMTPUser: ${SMTP_USER}
@@ -226,8 +234,17 @@ services:
       database.default.username: root
       database.default.password: ${MYSQL_ROOT_PASSWORD:-secretpassword}
       database.default.DBDriver: MySQLi
-      email.fromEmail: ${MYMEMBER_EMAIL_FROM:-${SMTP_USER}}
-      email.fromName: "MyMember Official"
+      # Email SMTP (Identik dengan SSO Engine)
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_CRYPTO: tls
+      SMTP_PROTOCOL: smtp
+      SMTP_MAIL_TYPE: html
+      SMTP_FROM_NAME: "Farrel Labib - MyMember"
+      email.fromEmail: ${SMTP_USER}
+      email.fromName: "Farrel Labib - MyMember"
       email.protocol: smtp
       email.SMTPHost: ${SMTP_HOST:-smtp.gmail.com}
       email.SMTPUser: ${SMTP_USER}
